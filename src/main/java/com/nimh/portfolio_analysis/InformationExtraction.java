@@ -1,7 +1,5 @@
 package com.nimh.portfolio_analysis;
 
-import com.opencsv.CSVWriter;
-
 import edu.stanford.nlp.ie.util.RelationTriple;
 import edu.stanford.nlp.simple.*;
 
@@ -9,6 +7,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -16,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.json.JSONArray; 
 
@@ -40,6 +40,10 @@ public class InformationExtraction {
 		{
 			Iterable<CSVRecord> csvRecords = CSVFormat.EXCEL.withHeader().parse(fileReader); 
 			Integer i = 0; 
+			logger.debug("loading geodatabse");
+			GeoPointExtractor geoPointExtractor = new GeoPointExtractor("allCountries.txt"); 
+			Map<Integer,Pair<Float,Float>> zipToCoords = geoPointExtractor.getZipToCoords(); 
+			logger.debug("done loading geodatabase");
 			for(CSVRecord csvRecord: csvRecords){
 				JSONObject grantObject = new JSONObject(); 
 				grantObject.put("title",csvRecord.get("Title"));
@@ -47,16 +51,24 @@ public class InformationExtraction {
 				grantObject.put("animal", csvRecord.get("Animal ")); 
 				grantObject.put("human", csvRecord.get("Human "));
 				grantObject.put("fiscal_year", csvRecord.get("FY")); 
-				grantObject.put("grant", csvRecord.get("Grant ")); 
+				grantObject.put("grant", csvRecord.get("Grant "));
+				Integer zip = Integer.parseInt(csvRecord.get("Zip Code"));
+				grantObject.put("zip", zip);
+				if(zipToCoords.containsKey(zip)){
+					JSONObject locationObject = new JSONObject(); 
+					locationObject.put("lat", zipToCoords.get(zip).getLeft()); 
+					locationObject.put("lon", zipToCoords.get(zip).getRight());
+					grantObject.put("zip_location", locationObject); 
+				}
 				String saText = csvRecord.get("SA Text"); 
 				if(saText.length()>2)
 				{
 					JSONArray relationArray = new JSONArray(); 
 				    Document doc = new Document(saText);
-				    for (Sentence sentence : doc.sentences()) {
-				    	JSONObject relationObject = new JSONObject(); 
+				    for (Sentence sentence : doc.sentences()) {	 
 				        for(RelationTriple triple: sentence.openieTriples()){
-				        	relationObject.put("confidence", triple.confidenceGloss()); 
+				        	JSONObject relationObject = new JSONObject();
+				        	relationObject.put("confidence", Float.parseFloat(triple.confidenceGloss())); 
 				        	relationObject.put("subject", triple.subjectGloss());
 				        	relationObject.put("relation", triple.relationGloss());
 				        	relationObject.put("object", triple.objectGloss());
@@ -69,6 +81,7 @@ public class InformationExtraction {
 	                {
 	                	System.out.println("number of grants annotated "+i);
 	                	logger.debug("number of grants annotated {}",i);
+	                	break; 
 	                }
 				}
 				grantObject.put("sa_text", saText); 
@@ -77,7 +90,7 @@ public class InformationExtraction {
 		}
 		catch(Exception e){
 			System.out.println("error now in exception "+e.getMessage());
-			throw new RuntimeException(e.getMessage()); 
+			throw new RuntimeException(e); 
 		}
 	}
 
