@@ -42,7 +42,7 @@ public class InformationExtraction {
 			Integer i = 0; 
 			logger.debug("loading geodatabse");
 			GeoPointExtractor geoPointExtractor = new GeoPointExtractor("allCountries.txt"); 
-			Map<Integer,Pair<Float,Float>> zipToCoords = geoPointExtractor.getZipToCoords(); 
+			Map<String,Pair<Float,Float>> zipToCoords = geoPointExtractor.getZipToCoords(); 
 			logger.debug("done loading geodatabase");
 			for(CSVRecord csvRecord: csvRecords){
 				JSONObject grantObject = new JSONObject(); 
@@ -50,16 +50,20 @@ public class InformationExtraction {
 				grantObject.put("pi_name", csvRecord.get("PI Name (Contact)")); 
 				grantObject.put("animal", csvRecord.get("Animal ")); 
 				grantObject.put("human", csvRecord.get("Human "));
-				grantObject.put("fiscal_year", csvRecord.get("FY")); 
+				grantObject.put("fiscal_year", Integer.parseInt(csvRecord.get("FY"))); 
 				grantObject.put("grant", csvRecord.get("Grant "));
-				Integer zip = Integer.parseInt(csvRecord.get("Zip Code"));
-				grantObject.put("zip", zip);
-				if(zipToCoords.containsKey(zip)){
-					JSONObject locationObject = new JSONObject(); 
-					locationObject.put("lat", zipToCoords.get(zip).getLeft()); 
-					locationObject.put("lon", zipToCoords.get(zip).getRight());
-					grantObject.put("zip_location", locationObject); 
+				
+				String zip = csvRecord.get("BusOfc Zip"); 
+				if(zip != null){		
+					grantObject.put("zip", zip);
+					if(zipToCoords.containsKey(zip)){
+						JSONObject locationObject = new JSONObject(); 
+						locationObject.put("lat", zipToCoords.get(zip).getLeft()); 
+						locationObject.put("lon", zipToCoords.get(zip).getRight());
+						grantObject.put("zip_location", locationObject); 
+					}
 				}
+				
 				String saText = csvRecord.get("SA Text"); 
 				if(saText.length()>2)
 				{
@@ -81,7 +85,6 @@ public class InformationExtraction {
 	                {
 	                	System.out.println("number of grants annotated "+i);
 	                	logger.debug("number of grants annotated {}",i);
-	                	break; 
 	                }
 				}
 				grantObject.put("sa_text", saText); 

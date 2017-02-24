@@ -16,7 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public class GeoPointExtractor {
 	final static Logger logger = LoggerFactory.getLogger(GeoPointExtractor.class); 
 	
-	private final Map<Integer,Pair<Float,Float>> zipToCoords = new HashMap<>(); 
+	private final Map<String,Pair<Float,Float>> zipToCoords = new HashMap<>(); 
 	
 	public GeoPointExtractor(String postalDataBaseFileName){
 		ClassLoader classLoader = getClass().getClassLoader();
@@ -25,11 +25,15 @@ public class GeoPointExtractor {
 			CSVReader csvReader = new CSVReader(bufferedReader, '\t')
 			){
 			String [] nextLine; 
+			Integer i=0; 
 			while((nextLine = csvReader.readNext()) != null){
-				if(nextLine[1] != null && nextLine[10] != null && nextLine[11] != null)
-					zipToCoords.put(Integer.parseInt(nextLine[1])
-							        , Pair.of(Float.parseFloat(nextLine[10])
+				if(nextLine[1] != null && nextLine[9] != null && nextLine[10] != null)
+					zipToCoords.put(nextLine[1]
+							        , Pair.of(Float.parseFloat(nextLine[9])
 							        , Float.parseFloat(nextLine[10]))); 
+				if(i++%100000==0){
+					logger.debug("on row {}",i);
+				}
 			}
 
 			
@@ -39,7 +43,7 @@ public class GeoPointExtractor {
 		}
 	}
 	
-	public Map<Integer,Pair<Float,Float>> getZipToCoords(){
+	public Map<String,Pair<Float,Float>> getZipToCoords(){
 		return zipToCoords; 
 	}
 }
