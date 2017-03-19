@@ -9,6 +9,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set; 
+import java.util.HashSet; 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,14 +46,20 @@ public class InformationExtraction {
 			GeoPointExtractor geoPointExtractor = new GeoPointExtractor("allCountries.txt"); 
 			Map<String,Pair<Float,Float>> zipToCoords = geoPointExtractor.getZipToCoords(); 
 			logger.debug("done loading geodatabase");
+			Set<String> grantSet = new HashSet<>(); 
 			for(CSVRecord csvRecord: csvRecords){
+				String grantId = csvRecord.get("Grant ").substring(0,13); 
+				if(grantSet.contains(grantId))
+					continue; 
+				else
+					grantSet.add(grantId); 
 				JSONObject grantObject = new JSONObject(); 
 				grantObject.put("title",csvRecord.get("Title"));
 				grantObject.put("pi_name", csvRecord.get("PI Name (Contact)")); 
 				grantObject.put("animal", csvRecord.get("Animal ")); 
 				grantObject.put("human", csvRecord.get("Human "));
 				grantObject.put("fiscal_year", Integer.parseInt(csvRecord.get("FY"))); 
-				grantObject.put("grant", csvRecord.get("Grant "));
+				grantObject.put("grant", grantId);
 				
 				String zip = csvRecord.get("BusOfc Zip"); 
 				if(zip != null){		
