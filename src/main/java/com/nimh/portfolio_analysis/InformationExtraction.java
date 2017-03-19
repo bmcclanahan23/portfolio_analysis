@@ -81,7 +81,7 @@ public class InformationExtraction {
 				        for(RelationTriple triple: sentence.openieTriples()){
 				        	JSONObject relationObject = new JSONObject();
 				        	relationObject.put("confidence", Float.parseFloat(triple.confidenceGloss())); 
-				        	relationObject.put("subject", triple.subjectGloss());
+				        	relationObject.put("subject", triple.subjectGloss());  
 				        	relationObject.put("relation", triple.relationGloss());
 				        	relationObject.put("object", triple.objectGloss());
 				        	relationArray.put(relationObject); 
